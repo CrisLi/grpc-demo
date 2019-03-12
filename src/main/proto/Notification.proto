@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package com.example.demo.proto.notification;
+
+option java_multiple_files = true;
+
+message Message {
+  string token = 1;
+  string payload = 2;
+}
+
+message User {
+  string token = 1;
+  string username = 2;
+}
+
+service Notification {
+
+  rpc Subscribe (User) returns (stream Message) {}
+
+}
+
