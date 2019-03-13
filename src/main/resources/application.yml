@@ -1,1 +1,14 @@
+spring:
+  profiles: 
+    active: dev
 
+---
+spring: 
+  profiles: dev
+
+---
+spring:
+  profiles: prod
+
+logging:
+  file: logs/app.log

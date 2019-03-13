@@ -39,16 +39,14 @@ public class NotificationImpl extends NotificationImplBase implements Disposable
             connections.remove(request);
         });
 
-        String payload = request.getUsername() + " connected";
-
         Message message = Message.newBuilder()
                 .setToken(request.getToken())
-                .setPayload(payload)
+                .setPayload("connected")
                 .build();
 
         responseObserver.onNext(message);
 
-        log.info(payload);
+        log.info("User [{}] connected", request.getUsername());
     }
 
     public int push() {
