@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+  grpc-demo-1:
+    build: .
+    volumes:
+      - ./logs-1:/usr/app/logs
+  grpc-demo-2:
+    build: .
+    volumes:
+      - ./logs-2:/usr/app/logs
+  nginx:
+    image: nginx:1.15.9
+    ports:
+      - "8085:8085"
+      - "8080:8080"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
