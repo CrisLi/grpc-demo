@@ -49,7 +49,9 @@ public class Application implements CommandLineRunner, DisposableBean {
     @Override
     public void destroy() throws Exception {
         log.info("gRpc server is shuting down");
-        server.shutdown();
+        if (server != null) {
+            server.shutdown();
+        }
     }
 
 }
