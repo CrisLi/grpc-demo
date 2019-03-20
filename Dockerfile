@@ -4,7 +4,6 @@ VOLUME /tmp
 
 WORKDIR /usr/app
 
-ARG JAR_FILE
 COPY target/*.jar app.jar
 
 EXPOSE 8080

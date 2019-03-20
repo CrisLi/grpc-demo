@@ -80,8 +80,9 @@ public class NotificationImpl extends NotificationImplBase implements Disposable
 
     private void pushToOneUser(User user, ServerCallStreamObserver<Message> stream) {
 
-        if (!stream.isReady()) {
-            log.info("User [{}] connection is not ready", user.getUsername());
+        if (stream.isCancelled()) {
+            log.info("User [{}] has disconnected", user.getUsername());
+            connections.remove(user);
             return;
         }
 
@@ -100,7 +101,7 @@ public class NotificationImpl extends NotificationImplBase implements Disposable
     @Override
     public void destroy() throws Exception {
         connections.values().stream()
-                .filter(ServerCallStreamObserver::isReady)
+                .filter(stream -> !stream.isCancelled())
                 .forEach(stream -> stream.onCompleted());
     }
 }
