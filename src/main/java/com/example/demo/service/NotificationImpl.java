@@ -66,16 +66,25 @@ public class NotificationImpl extends NotificationImplBase implements Disposable
         return new ArrayList<>(connections.keySet());
     }
 
-    public synchronized void startPing() {
-        if (pingDisposable == null) {
-            pingDisposable = Flux.interval(Duration.ofSeconds(0), Duration.ofSeconds(10)).subscribe(i -> push());
-        }
-    }
+    public synchronized void startPing(int interval) {
 
-    public synchronized void stopPing() {
         if (pingDisposable != null) {
             pingDisposable.dispose();
         }
+
+        pingDisposable = Flux.interval(Duration.ofSeconds(0), Duration.ofSeconds(interval)).subscribe(i -> push());
+
+        log.info("Start ping with interval {} second(s)", interval);
+    }
+
+    public synchronized void stopPing() {
+
+        if (pingDisposable != null) {
+            pingDisposable.dispose();
+            pingDisposable = null;
+        }
+
+        log.info("Stop ping");
     }
 
     private void pushToOneUser(User user, ServerCallStreamObserver<Message> stream) {

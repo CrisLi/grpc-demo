@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.proto.notification.User;
@@ -44,9 +45,16 @@ public class AdminController {
     }
 
     @GetMapping("/notification/startPing")
-    public Map<String, Object> startPing() {
-        notification.startPing();
-        return Collections.singletonMap("success", true);
+    public Map<String, Object> startPing(@RequestParam(value = "interval", defaultValue = "10", required = false) int interval) {
+
+        notification.startPing(interval);
+
+        Map<String, Object> json = new HashMap<>(2);
+
+        json.put("success", true);
+        json.put("interval", interval);
+
+        return json;
     }
 
     @GetMapping("/notification/stopPing")
