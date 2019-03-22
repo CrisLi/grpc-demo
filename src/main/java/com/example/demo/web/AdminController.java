@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.demo.proto.notification.User;
 import com.example.demo.service.ChatRoomImpl;
 import com.example.demo.service.NotificationImpl;
 
@@ -34,14 +33,24 @@ public class AdminController {
 
         Map<String, Object> json = new HashMap<>(2);
 
-        List<String> users = notification.getConnectedUsers().stream()
-                .map(User::getUsername)
+        List<Map<String, Object>> users = notification.getConnectedUsers().stream()
+                .map(user -> {
+                    Map<String, Object> item = new HashMap<>(2);
+                    item.put("username", user.getUsername());
+                    item.put("token", user.getToken());
+                    return item;
+                })
                 .collect(Collectors.toList());
 
         json.put("totalUserCounts", users.size());
         json.put("users", users);
 
         return json;
+    }
+
+    @GetMapping("/notification/pushTo")
+    public Map<String, Object> pushTo(@RequestParam("token") String token) {
+        return Collections.singletonMap("success", notification.pushTo(token));
     }
 
     @GetMapping("/notification/startPing")

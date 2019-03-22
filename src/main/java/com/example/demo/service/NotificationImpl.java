@@ -1,10 +1,10 @@
 package com.example.demo.service;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.stereotype.Service;
@@ -15,6 +15,10 @@ import com.example.demo.proto.notification.User;
 
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
@@ -23,7 +27,7 @@ import reactor.core.publisher.Flux;
 @Slf4j
 public class NotificationImpl extends NotificationImplBase implements DisposableBean {
 
-    private Map<User, ServerCallStreamObserver<Message>> connections = new ConcurrentHashMap<>();
+    private Map<String, UserConnection> users = new ConcurrentHashMap<>();
 
     private Disposable pingDisposable;
 
@@ -32,11 +36,11 @@ public class NotificationImpl extends NotificationImplBase implements Disposable
 
         ServerCallStreamObserver<Message> connection = (ServerCallStreamObserver<Message>) responseObserver;
 
-        connections.put(request, connection);
+        users.put(request.getToken(), new UserConnection(request, connection));
 
         connection.setOnCancelHandler(() -> {
             log.info("User [{}] has disconnected", request.getUsername());
-            connections.remove(request);
+            users.remove(request.getToken());
         });
 
         Message message = Message.newBuilder()
@@ -51,19 +55,32 @@ public class NotificationImpl extends NotificationImplBase implements Disposable
 
     public int push() {
 
-        if (connections.isEmpty()) {
+        if (users.isEmpty()) {
             return 0;
         }
 
-        connections.entrySet().parallelStream().forEach(entry -> pushToOneUser(entry.getKey(), entry.getValue()));
+        users.values().parallelStream().forEach(this::pushToOneUser);
 
-        log.info("Push to {} users(s)", connections.size());
+        log.info("Push to {} users(s)", users.size());
 
-        return connections.size();
+        return users.size();
+    }
+
+    public boolean pushTo(String token) {
+
+        if (!users.containsKey(token)) {
+            return false;
+        }
+
+        pushToOneUser(users.get(token));
+
+        return true;
     }
 
     public List<User> getConnectedUsers() {
-        return new ArrayList<>(connections.keySet());
+        return users.values().stream()
+                .map(UserConnection::getUser)
+                .collect(Collectors.toList());
     }
 
     public synchronized void startPing(int interval) {
@@ -87,15 +104,18 @@ public class NotificationImpl extends NotificationImplBase implements Disposable
         log.info("Stop ping");
     }
 
-    private void pushToOneUser(User user, ServerCallStreamObserver<Message> stream) {
+    private void pushToOneUser(UserConnection userConnection) {
+
+        User user = userConnection.getUser();
+        ServerCallStreamObserver<Message> stream = userConnection.getConnection();
 
         if (stream.isCancelled()) {
             log.info("User [{}] has disconnected", user.getUsername());
-            connections.remove(user);
+            users.remove(user.getToken());
             return;
         }
 
-        String payload = "Ping " + user.getUsername();
+        String payload = "Ping [" + user.getUsername() + "]";
 
         Message message = Message.newBuilder()
                 .setToken(user.getToken())
@@ -109,8 +129,22 @@ public class NotificationImpl extends NotificationImplBase implements Disposable
 
     @Override
     public void destroy() throws Exception {
-        connections.values().stream()
+        users.values().stream()
+                .map(UserConnection::getConnection)
                 .filter(stream -> !stream.isCancelled())
                 .forEach(stream -> stream.onCompleted());
+    }
+
+    @Getter
+    @Setter
+    @RequiredArgsConstructor
+    protected static class UserConnection {
+
+        @NonNull
+        private User user;
+
+        @NonNull
+        private ServerCallStreamObserver<Message> connection;
+
     }
 }
