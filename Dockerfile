@@ -5,8 +5,11 @@ VOLUME /tmp
 WORKDIR /usr/app
 
 COPY target/*.jar app.jar
+COPY docker-entrypoint.sh docker-entrypoint.sh
 
 EXPOSE 8080
 EXPOSE 8085
 
-ENTRYPOINT ["java","-jar", "-Dspring.profiles.active=prod", "app.jar"]
+ENV JAVA_OPTS="-Xmx2048m -Xms2048m -Dspring.profiles.active=prod"
+
+ENTRYPOINT ["sh", "docker-entrypoint.sh"]

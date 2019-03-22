@@ -6,19 +6,19 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
-import org.springframework.scheduling.annotation.EnableScheduling;
 
 import com.example.demo.service.ChatRoomImpl;
 import com.example.demo.service.GreeterImpl;
 import com.example.demo.service.NotificationImpl;
 
+import de.codecentric.boot.admin.server.config.EnableAdminServer;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import lombok.extern.slf4j.Slf4j;
 
 @SpringBootApplication
+@EnableAdminServer
 @Slf4j
-@EnableScheduling
 public class Application implements CommandLineRunner, DisposableBean {
 
     private Server server;
